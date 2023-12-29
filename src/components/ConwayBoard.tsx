@@ -12,7 +12,7 @@ export const ConwayBoard = ({gridSize, height, width}: ConwayBoardProps) => {
 
   let gameActive = false;
   let gameRateMs = 500;
-  const grid = Array.from(Array(width / gridSize), () => new Array(height / gridSize).fill(false));
+  const grid: boolean[][] = Array.from(Array(width / gridSize), () => new Array(height / gridSize).fill(false));
   
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -30,6 +30,65 @@ export const ConwayBoard = ({gridSize, height, width}: ConwayBoardProps) => {
         }
       }
     }
+  }
+
+  const applyConwayRules = () => {
+    const originalGrid = grid.slice(0);
+    /*
+    Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+    Any live cell with two or three live neighbours lives on to the next generation.
+    Any live cell with more than three live neighbours dies, as if by overpopulation.
+    Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+    */
+    for (let row = 0; row < grid.length; row++) {
+      for (let col = 0; col <  grid[row].length; col++) {
+        if (originalGrid[row][col]) {
+          if (checkUnderPopulation(row, col, originalGrid)) {
+            grid[row][col] = false;
+          } else if (checkOverPopulation(row, col, originalGrid)) {
+            grid[row][col] = false;
+          } else if (checkWillLive(row, col, originalGrid)) {
+            grid[row][col] = true;
+          }
+        } else {
+          if (checkComeAlive(row, col, originalGrid)) {
+            grid[row][col] = true;
+          }
+        }
+      }
+    }
+  }
+
+  const getNeighbors = (row: number, col: number, oldGrid: boolean[][]) => {
+    const neighbors: boolean[] = [];
+    for (let i = row - 1; i < row + 2; i++) {
+      for (let j = col - 1; j < col + 2; j++) {
+        if (i >= 0 && i < oldGrid.length && j >= 0 && j < oldGrid[i].length) {
+          if (i !== row && j !== col) {
+            neighbors.push(oldGrid[i][j]);
+          }
+        }
+      }
+    }
+    return neighbors;
+  }
+
+  const checkUnderPopulation = (row: number, col: number, oldGrid: boolean[][]) => {
+    return getNeighbors(row, col, oldGrid).map((neighbor) => neighbor ? 1 : 0).reduce((a, b) => a + b) < 2;
+  }
+
+  const checkOverPopulation = (row: number, col: number, oldGrid: boolean[][]) => {
+    return getNeighbors(row, col, oldGrid).map((neighbor): number => neighbor ? 1 : 0).reduce((a, b) => a + b) > 2;
+  }
+
+  
+  const checkComeAlive = (row: number, col: number, oldGrid: boolean[][]) => {
+    return getNeighbors(row, col, oldGrid).map((neighbor): number => neighbor ? 1 : 0).reduce((a, b) => a + b) === 3;
+  }
+
+  const checkWillLive = (row: number, col: number, oldGrid: boolean[][]) => {
+    const numLiveNeighbors = getNeighbors(row, col, oldGrid).map((neighbor): number => neighbor ? 1 : 0).reduce((a, b) => a + b);
+    return numLiveNeighbors === 2 || numLiveNeighbors === 3;
   }
 
   const handleClick = ({x, y}: MouseEvent) => {
@@ -68,15 +127,9 @@ export const ConwayBoard = ({gridSize, height, width}: ConwayBoardProps) => {
   })
 
   const draw = () => {
-    const ctx = canvas.current?.getContext('2d');
     generateGrid();
     snapPosition(mouseX, mouseY);
-    /*
-    for (let row = 0; row < grid.length; row++) {
-      console.log(row)
-    }
-    */
-    
+
     for (let row = 0; row <  grid.length; row++) {
       console.log(row)
       for (let col = 0;  col < grid[row].length; col++) {
