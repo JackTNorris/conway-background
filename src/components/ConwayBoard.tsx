@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
+import { useEffect, useRef } from "react";
 
 export type ConwayBoardProps = {
     className?: string;
@@ -37,13 +36,7 @@ export const ConwayBoard = ({gridSize, height, width}: ConwayBoardProps) => {
     for (let i = 0; i < grid.length; i++) {
       originalGrid.push(grid[i].slice(0));
     }
-    
-    /*
-    Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-    Any live cell with two or three live neighbours lives on to the next generation.
-    Any live cell with more than three live neighbours dies, as if by overpopulation.
-    Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-    */
+
     for (let row = 0; row < grid.length; row++) {
       for (let col = 0; col <  grid[row].length; col++) {
         if (originalGrid[row][col])
